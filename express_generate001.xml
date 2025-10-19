@@ -1,0 +1,301 @@
+<Alphas>
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression001" uId="Ashare" delay="0" exprId="hzheng.xxx.expression001">
+    <AlphaInfo author="hzheng" category="Reversion_momentum"/>
+    <Config>
+      <Expr name="prev_gap" expression="data(open,1)/data(cumadjfactor,1)-data(close,2)/data(cumadjfactor,2)"/>
+      <Expr name="mid_strength" expression="(data(curr_close_matrix_143000,1)/data(cumadjfactor,1)-data(curr_close_matrix_103000,1)/data(cumadjfactor,1))/(abs(data(curr_close_matrix_103000,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="seg_volume" expression="(data(curr_volume_matrix_140000,1)-data(curr_volume_matrix_103000,1))/data(cumsplit,1)"/>
+      <Expr name="vol_ratio" expression="seg_volume/(tsmean(seg_volume,20)+0.0001)"/>
+      <Expr name="hzheng.xxx.expression001" expression="${PROC} -zscore(prev_gap) + 0.8*zscore(mid_strength) -0.5*zscore(vol_ratio) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression002" uId="Ashare" delay="0" exprId="hzheng.xxx.expression002">
+    <AlphaInfo author="hzheng" category="Reversion_momentum"/>
+    <Config>
+      <Expr name="overnight_gap" expression="data(open,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2))-1"/>
+      <Expr name="intraday_return" expression="data(close,1)/data(cumadjfactor,1)/(data(open,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="turnover" expression="data(volume,1)/data(cumsplit,1)"/>
+      <Expr name="turnover_slope" expression="tsmean(turnover,5)-tsmean(turnover,20)"/>
+      <Expr name="hzheng.xxx.expression002" expression="${PROC} -tsrank(overnight_gap,10)+tsrank(intraday_return,10)+0.5*zscore(turnover_slope) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression003" uId="Ashare" delay="0" exprId="hzheng.xxx.expression003">
+    <AlphaInfo author="hzheng" category="Volatility"/>
+    <Config>
+      <Expr name="mid_return" expression="(data(curr_close_matrix_143000,1)/data(cumadjfactor,1)-data(curr_close_matrix_103000,1)/data(cumadjfactor,1))/(abs(data(curr_close_matrix_103000,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="intraday_series" expression="data(close,1)/data(cumadjfactor,1)/(data(open,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="volatility" expression="tsstddev(intraday_series,20)"/>
+      <Expr name="daily_ret" expression="data(close,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2))-1"/>
+      <Expr name="ret_trend" expression="tsmean(daily_ret,5)"/>
+      <Expr name="hzheng.xxx.expression003" expression="${PROC} -tscorr(mid_return,volatility,10)+0.6*zscore(ret_trend)-tsrank(mid_return,5) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="4"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression004" uId="Ashare" delay="0" exprId="hzheng.xxx.expression004">
+    <AlphaInfo author="hzheng" category="Range"/>
+    <Config>
+      <Expr name="adj_close" expression="data(close,1)/data(cumadjfactor,1)"/>
+      <Expr name="adj_high" expression="data(high,1)/data(cumadjfactor,1)"/>
+      <Expr name="adj_low" expression="data(low,1)/data(cumadjfactor,1)"/>
+      <Expr name="range_high" expression="tsmax(adj_high,20)"/>
+      <Expr name="range_low" expression="tsmin(adj_low,20)"/>
+      <Expr name="close_pos" expression="(adj_close-range_low)/(range_high-range_low+0.0001)"/>
+      <Expr name="vol_avg" expression="data(volume,1)/data(cumsplit,1)"/>
+      <Expr name="vol_skew" expression="tsmean(vol_avg,5)/(tsmean(vol_avg,20)+0.0001)-1"/>
+      <Expr name="hzheng.xxx.expression004" expression="${PROC} -zscore(close_pos)-0.6*zscore(vol_skew)+tsrank(adj_low,15) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="6"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression005" uId="Ashare" delay="0" exprId="hzheng.xxx.expression005">
+    <AlphaInfo author="hzheng" category="Liquidity"/>
+    <Config>
+      <Expr name="early_vol" expression="(data(curr_volume_matrix_100000,1)-data(curr_volume_matrix_093500,1))/data(cumsplit,1)"/>
+      <Expr name="early_vol_norm" expression="early_vol/(tsmean(early_vol,20)+0.0001)"/>
+      <Expr name="early_price_move" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)-data(open,1)/data(cumadjfactor,1)"/>
+      <Expr name="late_price_move" expression="data(close,1)/data(cumadjfactor,1)-data(curr_close_matrix_141500,1)/data(cumadjfactor,1)"/>
+      <Expr name="hzheng.xxx.expression005" expression="${PROC} -zscore(early_vol_norm*early_price_move)+0.7*zscore(late_price_move) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression006" uId="Ashare" delay="0" exprId="hzheng.xxx.expression006">
+    <AlphaInfo author="hzheng" category="Correlation"/>
+    <Config>
+      <Expr name="vwap_open" expression="data(curr_vwap_matrix_094500,1)/data(cumadjfactor,1)"/>
+      <Expr name="vwap_close" expression="data(curr_vwap_matrix_150000,1)/data(cumadjfactor,1)"/>
+      <Expr name="vwap_mid" expression="data(curr_vwap_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="vwap_drift" expression="(vwap_mid-vwap_open)/(abs(vwap_open)+0.0001)"/>
+      <Expr name="vwap_extension" expression="(vwap_close-vwap_mid)/(abs(vwap_mid)+0.0001)"/>
+      <Expr name="volume_mid" expression="data(curr_volume_matrix_143000,1)/data(cumsplit,1)"/>
+      <Expr name="volume_total" expression="data(volume,1)/data(cumsplit,1)"/>
+      <Expr name="volume_balance" expression="(volume_total-volume_mid)/(volume_mid+0.0001)"/>
+      <Expr name="hzheng.xxx.expression006" expression="${PROC} zscore(vwap_drift)+0.6*zscore(vwap_extension)-0.5*zscore(volume_balance) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="4"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression007" uId="Ashare" delay="0" exprId="hzheng.xxx.expression007">
+    <AlphaInfo author="hzheng" category="Reversion_momentum"/>
+    <Config>
+      <Expr name="mid_drop" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)-data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="close_recovery" expression="data(close,1)/data(cumadjfactor,1)-data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="recovery_ratio" expression="close_recovery/(abs(mid_drop)+0.0001)"/>
+      <Expr name="liquidity" expression="log(data(volume,1)/data(cumsplit,1)+1)"/>
+      <Expr name="liq_rank" expression="tsrank(liquidity,15)"/>
+      <Expr name="hzheng.xxx.expression007" expression="${PROC} zscore(recovery_ratio)-0.5*liq_rank ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="6"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression008" uId="Ashare" delay="0" exprId="hzheng.xxx.expression008">
+    <AlphaInfo author="hzheng" category="Volatility"/>
+    <Config>
+      <Expr name="noon_series" expression="data(curr_close_matrix_141500,1)/data(cumadjfactor,1)-data(curr_close_matrix_103000,1)/data(cumadjfactor,1)"/>
+      <Expr name="noon_vol" expression="tsstddev(noon_series,10)"/>
+      <Expr name="overnight" expression="data(open,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2))-1"/>
+      <Expr name="supply_pressure" expression="tsmean(data(high,1)/data(cumadjfactor,1)-data(close,1)/data(cumadjfactor,1),5)"/>
+      <Expr name="hzheng.xxx.expression008" expression="${PROC} -zscore(overnight)-0.8*zscore(noon_vol)+zscore(supply_pressure) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="4"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression009" uId="Ashare" delay="0" exprId="hzheng.xxx.expression009">
+    <AlphaInfo author="hzheng" category="Shadow"/>
+    <Config>
+      <Expr name="upper_shadow_ratio" expression="(data(high,1)/data(cumadjfactor,1)-data(close,1)/data(cumadjfactor,1))/(abs(data(close,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="lower_shadow_ratio" expression="(data(open,1)/data(cumadjfactor,1)-data(low,1)/data(cumadjfactor,1))/(abs(data(open,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="shadow_diff" expression="upper_shadow_ratio-lower_shadow_ratio"/>
+      <Expr name="shadow_trend" expression="tsmean(shadow_diff,5)-tsmean(shadow_diff,20)"/>
+      <Expr name="volume_base" expression="data(volume,1)/data(cumsplit,1)"/>
+      <Expr name="hzheng.xxx.expression009" expression="${PROC} -zscore(shadow_diff)+zscore(shadow_trend)-0.5*tsrank(volume_base,15) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression010" uId="Ashare" delay="0" exprId="hzheng.xxx.expression010">
+    <AlphaInfo author="hzheng" category="Intraday"/>
+    <Config>
+      <Expr name="close_vs_noon" expression="data(close,1)/data(cumadjfactor,1)-data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="noon_vs_morning" expression="data(curr_close_matrix_143000,1)/data(cumadjfactor,1)-data(curr_close_matrix_103000,1)/data(cumadjfactor,1)"/>
+      <Expr name="volume_change" expression="(data(curr_volume_matrix_143000,1)-data(curr_volume_matrix_103000,1))/data(cumsplit,1)"/>
+      <Expr name="volume_norm" expression="volume_change/(tsmean(volume_change,15)+0.0001)"/>
+      <Expr name="hzheng.xxx.expression010" expression="${PROC} zscore(close_vs_noon)-0.8*zscore(noon_vs_morning)-0.6*zscore(volume_norm) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression011" uId="Ashare" delay="0" exprId="hzheng.xxx.expression011">
+    <AlphaInfo author="hzheng" category="Momentum"/>
+    <Config>
+      <Expr name="morning_ret" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)/(data(open,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="afternoon_ret" expression="data(close,1)/data(cumadjfactor,1)/(data(curr_close_matrix_141500,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="morning_vol" expression="(data(curr_volume_matrix_103000,1)-data(curr_volume_matrix_093500,1))/data(cumsplit,1)"/>
+      <Expr name="morning_vol_norm" expression="morning_vol/(tsmean(morning_vol,20)+0.0001)"/>
+      <Expr name="hzheng.xxx.expression011" expression="${PROC} tsrank(morning_ret,10)-0.7*tsrank(afternoon_ret,10)+0.6*zscore(morning_vol_norm) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="6"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression012" uId="Ashare" delay="0" exprId="hzheng.xxx.expression012">
+    <AlphaInfo author="hzheng" category="Reversion_momentum"/>
+    <Config>
+      <Expr name="overnight_gap" expression="data(open,1)/data(cumadjfactor,1)-data(close,2)/data(cumadjfactor,2)"/>
+      <Expr name="recent_low" expression="tsmin(data(low,1)/data(cumadjfactor,1),20)"/>
+      <Expr name="support_gap" expression="(data(open,1)/data(cumadjfactor,1)-recent_low)/(abs(recent_low)+0.0001)"/>
+      <Expr name="intraday_strength" expression="data(close,1)/data(cumadjfactor,1)-data(open,1)/data(cumadjfactor,1)"/>
+      <Expr name="hzheng.xxx.expression012" expression="${PROC} -zscore(overnight_gap)+0.9*zscore(intraday_strength)-0.5*zscore(support_gap) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression013" uId="Ashare" delay="0" exprId="hzheng.xxx.expression013">
+    <AlphaInfo author="hzheng" category="Correlation"/>
+    <Config>
+      <Expr name="vwap_open" expression="data(curr_vwap_matrix_094500,1)/data(cumadjfactor,1)"/>
+      <Expr name="vwap_mid" expression="data(curr_vwap_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="vwap_close" expression="data(curr_vwap_matrix_150000,1)/data(cumadjfactor,1)"/>
+      <Expr name="vwap_slope" expression="(vwap_mid-vwap_open)/(abs(vwap_open)+0.0001)"/>
+      <Expr name="vwap_extension" expression="(vwap_close-vwap_mid)/(abs(vwap_mid)+0.0001)"/>
+      <Expr name="volume_mid" expression="data(curr_volume_matrix_143000,1)/data(cumsplit,1)"/>
+      <Expr name="volume_tail" expression="data(volume,1)/data(cumsplit,1)-volume_mid"/>
+      <Expr name="volume_balance" expression="volume_tail/(volume_mid+0.0001)"/>
+      <Expr name="hzheng.xxx.expression013" expression="${PROC} zscore(vwap_slope)+0.6*zscore(vwap_extension)-0.5*zscore(volume_balance) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="4"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression014" uId="Ashare" delay="0" exprId="hzheng.xxx.expression014">
+    <AlphaInfo author="hzheng" category="Volatility"/>
+    <Config>
+      <Expr name="mid_range" expression="(data(curr_close_matrix_143000,1)/data(cumadjfactor,1)-data(curr_close_matrix_103000,1)/data(cumadjfactor,1))/(abs(data(curr_close_matrix_103000,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="full_range" expression="(data(high,1)/data(cumadjfactor,1)-data(low,1)/data(cumadjfactor,1))/(abs(data(close,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="range_ratio" expression="mid_range/(full_range+0.0001)"/>
+      <Expr name="trend_persist" expression="tsmean(range_ratio,10)-tsmean(range_ratio,40)"/>
+      <Expr name="hzheng.xxx.expression014" expression="${PROC} -zscore(range_ratio)+zscore(trend_persist)-0.5*tsrank(full_range,20) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="6"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression015" uId="Ashare" delay="0" exprId="hzheng.xxx.expression015">
+    <AlphaInfo author="hzheng" category="Momentum"/>
+    <Config>
+      <Expr name="late_ret" expression="data(close,1)/data(cumadjfactor,1)-data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="day_trend" expression="data(close,1)/data(cumadjfactor,1)-data(open,1)/data(cumadjfactor,1)"/>
+      <Expr name="volume_mid" expression="data(curr_volume_matrix_140000,1)/data(cumsplit,1)"/>
+      <Expr name="total_volume" expression="data(volume,1)/data(cumsplit,1)"/>
+      <Expr name="late_volume" expression="total_volume-volume_mid"/>
+      <Expr name="late_vol_norm" expression="late_volume/(tsmean(late_volume,20)+0.0001)"/>
+      <Expr name="hzheng.xxx.expression015" expression="${PROC} zscore(late_ret)-0.8*zscore(late_vol_norm)+0.6*zscore(day_trend) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression016" uId="Ashare" delay="0" exprId="hzheng.xxx.expression016">
+    <AlphaInfo author="hzheng" category="Reversion_momentum"/>
+    <Config>
+      <Expr name="gap_down" expression="data(open,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2))-1"/>
+      <Expr name="panic_depth" expression="(data(open,1)/data(cumadjfactor,1)-data(low,1)/data(cumadjfactor,1))/(abs(data(open,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="morning_low" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)-data(low,1)/data(cumadjfactor,1)"/>
+      <Expr name="rebound" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)-data(open,1)/data(cumadjfactor,1)"/>
+      <Expr name="hzheng.xxx.expression016" expression="${PROC} -zscore(gap_down)+0.7*zscore(rebound)-0.6*zscore(panic_depth)+0.4*zscore(morning_low) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="6"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression017" uId="Ashare" delay="0" exprId="hzheng.xxx.expression017">
+    <AlphaInfo author="hzheng" category="Regression"/>
+    <Config>
+      <Expr name="close_change" expression="data(close,1)/data(cumadjfactor,1)-data(close,2)/data(cumadjfactor,2)"/>
+      <Expr name="intraday_path" expression="data(close,1)/data(cumadjfactor,1)-data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+      <Expr name="reg_term" expression="tsregression(close_change,intraday_path,retmode=0,days=60)"/>
+      <Expr name="vol_consistency" expression="tsstddev(close_change,30)"/>
+      <Expr name="trend_bias" expression="tsmean(close_change,5)"/>
+      <Expr name="hzheng.xxx.expression017" expression="${PROC} -reg_term-0.5*zscore(vol_consistency)+trend_bias ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression018" uId="Ashare" delay="0" exprId="hzheng.xxx.expression018">
+    <AlphaInfo author="hzheng" category="Liquidity"/>
+    <Config>
+      <Expr name="overnight_volume" expression="data(curr_volume_matrix_093500,1)/data(cumsplit,1)"/>
+      <Expr name="intraday_volume" expression="(data(curr_volume_matrix_140000,1)-data(curr_volume_matrix_093500,1))/data(cumsplit,1)"/>
+      <Expr name="volume_div" expression="overnight_volume/(intraday_volume+0.0001)"/>
+      <Expr name="price_follow" expression="data(curr_close_matrix_143000,1)/data(cumadjfactor,1)/(data(open,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="history_bias" expression="tsmean(volume_div,10)-tsmean(volume_div,30)"/>
+      <Expr name="hzheng.xxx.expression018" expression="${PROC} -zscore(volume_div)+0.8*zscore(price_follow)+0.5*zscore(history_bias) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression019" uId="Ashare" delay="0" exprId="hzheng.xxx.expression019">
+    <AlphaInfo author="hzheng" category="Volatility"/>
+    <Config>
+      <Expr name="daily_ret" expression="data(close,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2))-1"/>
+      <Expr name="intraday_amp" expression="(data(high,1)/data(cumadjfactor,1)-data(low,1)/data(cumadjfactor,1))/(abs(data(open,1)/data(cumadjfactor,1))+0.0001)"/>
+      <Expr name="ret_vol" expression="tsstddev(daily_ret,30)"/>
+      <Expr name="amp_trend" expression="tsmean(intraday_amp,5)-tsmean(intraday_amp,20)"/>
+      <Expr name="hzheng.xxx.expression019" expression="${PROC} -zscore(ret_vol)+0.7*zscore(amp_trend)+tsrank(daily_ret,15)-0.5*zscore(intraday_amp) ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="6"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+
+  <Alpha mId="AlphaHFExprDaily" id="hzheng.xxx.expression020" uId="Ashare" delay="0" exprId="hzheng.xxx.expression020">
+    <AlphaInfo author="hzheng" category="Correlation"/>
+    <Config>
+      <Expr name="noon_return" expression="data(curr_close_matrix_141500,1)/data(cumadjfactor,1)/(data(curr_close_matrix_103000,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="noon_volume" expression="(data(curr_volume_matrix_140000,1)-data(curr_volume_matrix_103000,1))/data(cumsplit,1)"/>
+      <Expr name="noon_volume_rank" expression="tsrank(noon_volume,20)"/>
+      <Expr name="price_extension" expression="data(close,1)/data(cumadjfactor,1)/(data(curr_close_matrix_141500,1)/data(cumadjfactor,1))-1"/>
+      <Expr name="series_corr" expression="tscorr(noon_return,price_extension,15)"/>
+      <Expr name="hzheng.xxx.expression020" expression="${PROC} -0.6*zscore(noon_volume_rank)+zscore(price_extension)-0.8*series_corr ${PROC2}"/>
+    </Config>
+    <Op mId="OpDecay" days="5"/>
+    <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1" rankMode="1"/>
+    <Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+  </Alpha>
+</Alphas>
