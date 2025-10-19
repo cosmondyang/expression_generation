@@ -1,0 +1,669 @@
+<Alpha mId="AlphaHFExprDaily" id="D1.jxiao.002" uId="Ashare" delay="0" exprId="res">
+<AlphaInfo author="jxiao" category="Others"/>
+<Config>
+<Expr name="res" expression="${PROC} tsscale(data(close,1)/data(cumadjfactor,1),15)-tsrank(data(close,1)/data(cumadjfactor,1),15)+tsscale(data(high,1)/data(cumadjfactor,1),15)-tsrank(data(high,1)/data(cumadjfactor,1),15)+tsscale(data(low,1)/data(cumadjfactor,1),15)-tsrank(data(low,1)/data(cumadjfactor,1),15)+tsscale(data(close,1)/data(cumadjfactor,1),20)-tsrank(data(close,1)/data(cumadjfactor,1),20)+tsscale(data(high,1)/data(cumadjfactor,1),20)-tsrank(data(high,1)/data(cumadjfactor,1),20)+tsscale(data(low,1)/data(cumadjfactor,1),20)-tsrank(data(low,1)/data(cumadjfactor,1),20) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="alpha2_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1" rankMode="1"/>
+<Op mId="OpDecay" days="10"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="alpha2_v2_${SNAPTIME}"/>
+</Alpha>
+
+<Alpha mId="AlphaHFExprDaily" id="D1.lwang.exprd2" uId="Ashare" delay="0" exprId="D1.lwang.exprd2">
+<AlphaInfo author="lwang" category="Reversion_momentum"/>
+<Config>
+<Expr name="close_open" realname="pv" expression="data(close,1)/data(cumadjfactor, 1)-data(curr_close_matrix_094500,1)/data(cumadjfactor, 1)"/>
+<Expr name="up_close_open" realname="pv" expression="ifelse(less(close_open, 0.02*data(close,1)/data(cumadjfactor, 1) ),NAN,close_open)"/>
+<Expr name="abs_close_open" realname="pv" expression="ifelse(less(abs(close_open), 0.02*data(close,1)/data(cumadjfactor, 1) ),NAN,abs(close_open))"/>
+<Expr name="D1.lwang.exprd2" realname="indmom" expression="${PROC} -tssum(up_close_open,5)/(tssum(abs_close_open,5)+0.1) -tssum(up_close_open,60)/(tssum(abs_close_open,60)+0.1) ${PROC2}"/>
+</Config>
+<Op mId="OpIndNeut" group="WindIndustry.sw1"/>
+</Alpha>
+<!--  config delay=0 but all data used need to specify data(, 1) to only use delay-1 data, be careful! -->
+<!--  vwap日内变化与twap日内变化的相关性，正相关买入负相关卖出  -->
+<Alpha mId="AlphaHFExprDaily" id="D1.lwang.exprd8" uId="AshareFiltered" delay="0" exprId="D1.lwang.exprd8">
+<AlphaInfo author="lwang" category="Correlation"/>
+<Config>
+<Expr name="twap_cuma" realname="twap" expression=" (data(curr_twap_matrix_150000,1) - data(curr_twap_matrix_094500,1))/ data(cumadjfactor, 1) "/>
+<Expr name="vwap_cuma" realname="vwap" expression=" (data(curr_vwap_matrix_150000,1) - data(curr_vwap_matrix_094500,1))/ data(cumadjfactor, 1) "/>
+<Expr name="corr" realname="corr" expression=" tscorr(vwap_cuma , twap_cuma ,5) + tscorr(vwap_cuma , twap_cuma ,10) + tscorr(vwap_cuma , twap_cuma ,30) "/>
+<Expr name="D1.lwang.exprd8" realname="indmom" expression="${PROC} corr ${PROC2}"/>
+</Config>
+<Op mId="OpIndNeut" group="market"/>
+<Op mId="OpNeutralize" groups="market" factors="cap:1" rankMode="1"/>
+</Alpha>
+
+
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.001" uId="Ashare" delay="0" exprId="d1.mcao.001">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(close,1)/data(cumadjfactor,1)*data(cumadjfactor)*1.05-data(curr_vwap_matrix_113000,1)/data(cumadjfactor,1)*data(cumadjfactor)"/>
+<Expr name="ret2" expression="data(open)-data(close,1)/data(cumadjfactor,1)*data(cumadjfactor)*.95"/>
+<Expr name="reta" expression="ifelse(larger(ret,ret2),ret,ret2)"/>
+<Expr name="d1.mcao.001" expression="${PROC} tsmean(reta,5)/(tsstddev(reta,5)) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.001_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.001_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  distance of rolling low and 涨停价格  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.002" uId="Ashare" delay="0" exprId="d1.mcao.002">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(close,1)/data(cumadjfactor,1)*data(cumadjfactor)*1.1-data(roll_low_matrix)"/>
+<Expr name="d1.mcao.002" expression="${PROC} -tszscore(ret,5) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.002_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.002_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  distance of rolling low to 跌停价格  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.003" uId="Ashare" delay="0" exprId="d1.mcao.003">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret2" expression="data(roll_low_matrix)/data(cumadjfactor)-data(close,1)/data(cumadjfactor,1)*.9"/>
+<Expr name="d1.mcao.003" expression="${PROC} tszscore(ret2,25) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.003_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.003_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  regression(distance of high and low, distrance of high and close)  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.004" uId="Ashare" delay="0" exprId="d1.mcao.004">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(close,1)-data(curr_high_matrix_100000,1)"/>
+<Expr name="ret2" expression="data(curr_high_matrix_100000,1)-data(curr_low_matrix_100000,1)"/>
+<Expr name="d1.mcao.004" expression="${PROC} -(tsregression(ret,ret2,retmode=0,days=150))${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.004_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.004_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  regression(difference in prev day overnight return and intraday return, liquidity=volume/return)  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.005" uId="Ashare" delay="0" exprId="d1.mcao.005">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(open,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2))-data(dr.ir,1)*1.1"/>
+<Expr name="d1.mcao.005" expression="${PROC} tsregression(ret, log(data(roll_volume_matrix,0))/abs(data(roll_vwap_matrix,0)/(data(roll_vwap_matrix,1)/data(cumadjfactor,1)*data(cumadjfactor))-1),retmode=0, days=200) +tsregression(ret, log(data(roll_volume_matrix,0))/abs(data(roll_vwap_matrix,0)/(data(roll_vwap_matrix,1)/data(cumadjfactor,1)*data(cumadjfactor))-1),retmode=0, days=150) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.005_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.005_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  regression(intraday return, liquidity=volume/return)  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.006" uId="Ashare" delay="0" exprId="d1.mcao.006">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(dr.ir,1)"/>
+<Expr name="d1.mcao.006" expression="${PROC} -tsregression(ret, log(data(roll_volume_matrix,0))/abs(data(roll_vwap_matrix,0)/(data(roll_vwap_matrix,1)/data(cumadjfactor,1)*data(cumadjfactor))-1),retmode=0, days=15)${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.006_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.006_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  regression(close to 1430 return, 1430/diff in 0930 roll price and 1430 price)  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.007" uId="Ashare" delay="0" exprId="d1.mcao.007">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(close,1)/data(curr_vwap_matrix_143000,1)"/>
+<Expr name="ret2" expression="data(curr_vwap_matrix_143000,1)/data(cumadjfactor,1)/(data(roll_vwap_matrix,1)/data(cumadjfactor,1)-data(curr_vwap_matrix_143000,2)/data(cumadjfactor,2))"/>
+<Expr name="d1.mcao.007" expression="${PROC} -tsregression(ret,tsdelay(ret2,10),retmode=0,days=120)-tsregression(ret,tsdelay(ret2,1),retmode=0,days=120)-tsregression(ret,tsdelay(ret2,1),retmode=0,days=200)${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.007_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.007_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  difference in high and low price weighted by relative position of daily trading volume  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.mcao.008" uId="Ashare" delay="0" exprId="d1.mcao.008">
+<AlphaInfo author="mcao" category="regression"/>
+<Config>
+<Expr name="liq_spread" expression="(data(roll_high_matrix,0)-data(roll_low_matrix,0))/(data(roll_high_matrix,0)+data(roll_low_matrix,0))/2"/>
+<Expr name="liq_volume" expression="data(volume,1)/data(cumsplit, 1)*data(cumsplit)"/>
+<Expr name="d1.mcao.008" expression="-(liq_spread/tsdelay(liq_spread,40)-1) * (liq_volume/tsdelay(liq_volume,40)-1)"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.008_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="8"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}" delay="0" dateoffset="1024" nioname="d1.mcao.008_v2_${SNAPTIME}"/>
+</Alpha>
+
+<Alpha mId="AlphaHFExprDaily" id="d1.qzhang.004" uId="Ashare" delay="0" exprId="alpha">
+<AlphaInfo author="qzhang" category="regression"/>
+<Config>
+<Expr name="a0" expression="tsmin(-data(high,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2)),120)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="b0" expression="tsmax(-data(low,1)/data(cumadjfactor,1)/(data(close,2)/data(cumadjfactor,2)),120)" registerDr="true" doStats="true" doScale="true"/>
+<!--  <Expr name="c3" expression="data(dr.or,0)-data(dr.ir,1)"  registerDr="true" doStats="true" doScale="true"  />   -->
+<Expr name="c2" expression="data(dr.or,0)-data(dr.ir,1)-groupmean(data(dr.or,0)-data(dr.ir,1),groupname=WindIndustry.wind3,weightname=cap)" registerDr="true" doStats="true" doScale="true"/>
+<!--  <Expr name="alpha" expression="${PROC}-min(b0-c3,c3-a0)${PROC2}" />  -->
+<Expr name="alpha" expression="${PROC}-min(b0-c2,c2-a0)${PROC2}"/>
+<!--  <Expr name="alpha" expression="tsmax(data(dr.or,0),250)" />  -->
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="d1.qzhang.004_v1_${SNAPTIME}"/>
+<Op mId="OpIndNeut" group="market"/>
+<Op mId="OpWinsorize" std="4.0 4.0 4.0"/>
+<Op mId="OpNeutralize" groups="market" factors="returns120:1 returns50:1 returns20:1 returns5:1 returns:1 cap:1" rankMode="1"/>
+<!--  <Op mId="OpPow" exp="1" />  -->
+<!--  <Op mId="OpDecay" days="2" />
+
+
+                        
+            <Op mId="OpNeutralize" groups="market" factors="returns250:1  returns120:1 returns50:1 returns20:1 returns5:1 returns:1 cap:1" rankMode="1"/>  -->
+<!--  <Op mId="OpDecay" days="2" />  -->
+<!--  <Op mId="OpPow" exp=" 1.5" rank="false"/>  -->
+<Op mId="OpWinsorize" std="4.0 4.0 4.0"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="d1.qzhang.004_v2_${SNAPTIME}"/>
+<!--  <Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>  -->
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="d1.qzhang.007" uId="Ashare" delay="0" exprId="alpha">
+<AlphaInfo author="qzhang" category="regression"/>
+<Config>
+<Expr name="ret" expression="data(dr.ir,1)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="ret1" expression="ret-groupmean(ret,groupname=WindIndustry.sw3,weightname=cap)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="vol1" expression="(tsscale(data(volume,1),20))*(ret1)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="ma10" expression="-decay(vol1,10)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="neut1" expression="factorneut(ma10,tsscale(ma10,20))+factorneut(ma10,tsscale(ma10,21))" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="alpha" expression="${PROC}neut1${PROC2}"/>
+<!--  <Expr name="alpha" expression="tsmax(data(dr.or,0),250)" />  -->
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="d1.qzhang.007_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns120:1 returns50:1 returns20:1 returns5:1 returns:1" rankMode="1"/>
+<!--  <Op mId="OpPow" exp="1" />  -->
+<Op mId="OpDecay" days="2"/>
+<!--  <Op mId="OpIndNeut" group="GROUPHSZZ" />  -->
+<Op mId="OpNeutralize" groups="market" factors="returns120:1 returns50:1 returns20:1 returns5:1 returns:1" rankMode="1"/>
+<!--  <Op mId="OpDecay" days="2" />  -->
+<!--  <Op mId="OpPow" exp=" 1.5" rank="false"/>  -->
+<Op mId="OpWinsorize" std="4.0 4.0 4.0"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="d1.qzhang.007_v2_${SNAPTIME}"/>
+<!--  <Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>  -->
+  
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="d1.qzhang.008" uId="Ashare" delay="0" exprId="alpha">
+<AlphaInfo author="qzhang" category="regression"/>
+<Config>
+<Expr name="vol1" expression="data(equity.cquser.ordermoo2.sumvol,0)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="vol2" expression="data(volume,1)" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="a1" expression="-factorneut(tsrank(vol1,250),tsrank(vol2,250))" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="a2" expression="-factorneut(tsrank(vol1,150),tsrank(vol2,150))" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="a3" expression="-factorneut(tsrank(vol1,200),tsrank(vol2,200))" registerDr="true" doStats="true" doScale="true"/>
+<Expr name="alpha" expression="${PROC}factorneut(zscore(a1)+zscore(a2)+zscore(a3),data(dr.or,0))${PROC2}"/>
+<!--  <Expr name="alpha" expression="tsmax(data(dr.or,0),250)" />  -->
+</Config>
+<!--  <Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>  -->
+<Op mId="OpIndNeut" group="market"/>
+<Op mId="OpWinsorize" std="4.0 4.0 4.0"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="d1.qzhang.008_v1_${SNAPTIME}"/>
+<!--  <Op mId="OpIndNeut" group="WindIndustry.wind1" />  -->
+<Op mId="OpNeutralize" groups="market" factors="returns250:1 returns120:1 returns50:1 returns20:1 returns10:1 returns5:1 returns:1 cap:1" rankMode="1"/>
+<!--  <Op mId="OpPow" exp="1" />  -->
+<Op mId="OpDecay" days="10"/>
+<!--  <Op mId="OpIndNeut" group="GROUPHSZZ" />  -->
+<Op mId="OpNeutralize" groups="market" factors="returns250:1 returns120:1 returns50:1 returns20:1 returns10:1 returns5:1 returns:1" rankMode="1"/>
+<!--  <Op mId="OpDecay" days="2" />  -->
+<!--  <Op mId="OpPow" exp=" 1.5" rank="false"/>  -->
+<Op mId="OpWinsorize" std="4.0 4.0 4.0"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="d1.qzhang.008_v2_${SNAPTIME}"/>
+<!--  <Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>  -->
+</Alpha>
+
+
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.001.0912" uId="Ashare" delay="0" exprId="alpha">
+<AlphaInfo author="xchen" category="Regression_learning" batch_name="D1.xchen.001"/>
+<Config>
+<Expr name="a1" expression="-tsregression(data(dr.ir, 1), tsdelay(data(dr.ir, 1), 1), retmode=0, days=20)"/>
+<Expr name="a2" expression="-tsregression(data(dr.ir, 1), tsdelay(data(dr.ir, 1), 2), retmode=0, days=20)"/>
+<Expr name="a3" expression="-data(dr.ir, 1)"/>
+<Expr name="alpha" expression="${PROC} a1 + a2 + a3 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="6"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.001.0915" uId="Ashare" delay="0" exprId="D1.xchen.001">
+<AlphaInfo author="xchen" category="Regression_learning" batch_name="D1.xchen.001"/>
+<Config>
+<Expr name="ir1" expression="data(dr.ir, 1)"/>
+<Expr name="ir2" expression="groupneut(data(vwap_113000, 1) / data(open, 1) - 1, WindIndustry.sw1)"/>
+<Expr name="ir3" expression="groupneut(data(close, 1) / data(vwap_113000, 1) - 1, WindIndustry.sw1)"/>
+<Expr name="a1" expression="- tsregression(ir1, tsdelay(ir1, 1), retmode=0, days=20)"/>
+<Expr name="a2" expression="tsregression(ir2, tsdelay(ir2, 1), retmode=0, days=20)"/>
+<Expr name="a3" expression="- tsregression(ir3, tsdelay(ir3, 1), retmode=0, days=20)"/>
+<Expr name="D1.xchen.001" expression="${PROC} a1 + a2 + a3 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="6"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="d1.xchen.001.0916" uId="Ashare" delay="0" exprId="d1.xchen.001">
+<AlphaInfo author="xchen" category="Regression_learning" batch_name="d1.xchen.001"/>
+<Config>
+<Expr name="ir_low" expression="data(low_113000, 1) / data(open, 1) - 1"/>
+<Expr name="ir_high" expression="data(close, 1) / data(high_113000, 1) - 1"/>
+<Expr name="ir1" expression="groupneut(ir_low, WindIndustry.sw1)"/>
+<Expr name="ir2" expression="groupneut(ir_high, WindIndustry.sw1)"/>
+<Expr name="a1" expression="tsregression(ir1, tsdelay(ir1, 1), retmode=0, days=50) + tsregression(ir1, tsdelay(ir1, 1), retmode=0, days=100) + tsregression(ir1, tsdelay(ir1, 1), retmode=0, days=250)"/>
+<Expr name="a2" expression="- tsregression(ir2, tsdelay(ir2, 1), retmode=0, days=50) - tsregression(ir2, tsdelay(ir2, 1), retmode=0, days=100) - tsregression(ir2, tsdelay(ir2, 1), retmode=0, days=250)"/>
+<Expr name="d1.xchen.001" expression="${PROC} a1 + a2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="0"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="6"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.002" uId="Ashare" delay="0" exprId="D1.xchen.002">
+<AlphaInfo author="xchen" category="Regression_learning" batch_name="D1.xchen.002"/>
+<Config>
+<Expr name="a1" expression="tsregression(data(dr.hlmc_1, 1), data(dr.hlmo_1, 1), retmode=0, days=7)"/>
+<Expr name="a2" expression="tsregression(data(dr.hlmc_1, 1), data(dr.hlmo_1, 1), retmode=0, days=20)"/>
+<Expr name="a3" expression="tsregression(data(dr.hlmc_1, 1), data(dr.hlmo_1, 1), retmode=0, days=50)"/>
+<Expr name="D1.xchen.002" expression="${PROC} a1 + a2 + a3 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="7"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.003" uId="Ashare" delay="0" exprId="D1.xchen.003">
+<AlphaInfo author="xchen" category="Regression_learning" batch_name="D1.xchen.003"/>
+<Config>
+<Expr name="volsignret_1" expression="sign(tsdelta(data(volume, 1), 1) / data(cumsplit, 0)) * data(returns, 1)"/>
+<Expr name="a1" expression="-tsregression(volsignret_1, groupmean(volsignret_1, WindIndustry.sw1), retmode=0, days=20)"/>
+<Expr name="a2" expression="-tsregression(volsignret_1, groupmean(volsignret_1, WindIndustry.sw1), retmode=0, days=50)"/>
+<Expr name="a3" expression="-tsregression(volsignret_1, groupmean(volsignret_1, WindIndustry.sw1), retmode=0, days=120)"/>
+<Expr name="a4" expression="-volsignret_1"/>
+<Expr name="D1.xchen.003" expression="${PROC} a1 + a2 + a3 + a4 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="6"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.004" uId="Ashare" delay="0" exprId="D1.xchen.004">
+<AlphaInfo author="xchen" category="Reversion_momentum" batch_name="D1.xchen.004"/>
+<Config>
+<Expr name="volsignret_1" expression="sign(tsdelta(data(volume, 1), 1) / data(cumsplit, 0)) * data(returns, 1)"/>
+<Expr name="a1" expression="-vectorproj(data(dr.aret_1, 1), volsignret_1)"/>
+<Expr name="a2" expression="-vectorproj(data(dr.aret_3, 1), volsignret_1)"/>
+<Expr name="D1.xchen.004" expression="${PROC} a1+a2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="6"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.005.0912" uId="Ashare" delay="0" exprId="D1.xchen.005">
+<AlphaInfo author="xchen" category="Correlation" batch_name="D1.xchen.005"/>
+<Config>
+<Expr name="D1.xchen.005" expression="${PROC} tscorr(data(dr.adcps_1, 1), data(dr.hlmc_30, 1), 5) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="3"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="d1.xchen.005.0916" uId="Ashare" delay="0" exprId="d1.xchen.005">
+<AlphaInfo author="xchen" category="Correlation" batch_name="d1.xchen.005"/>
+<Config>
+<Expr name="adj_high" expression="data(high, 1) / data(cumadjfactor, 0)"/>
+<Expr name="adj_low" expression="data(low, 1) / data(cumadjfactor, 0)"/>
+<Expr name="adj_close" expression="data(close, 1) / data(cumadjfactor, 0)"/>
+<Expr name="adj_close_113000" expression="data(close_113000, 1) / data(cumadjfactor, 0)"/>
+<Expr name="adc" expression="abs(adj_close - tsdelay(adj_close, 1)) + abs(adj_close - adj_close_113000)"/>
+<Expr name="adc2" expression="adc + 0.2 * groupneut(adc, WindIndustry.sw1)"/>
+<Expr name="a25" expression="(tsmax(adj_high, 10) + tsmin(adj_low, 10)) - adj_close - adj_close_113000"/>
+<Expr name="a30" expression="(tsmax(adj_high, 30) + tsmin(adj_low, 30)) - adj_close - adj_close_113000"/>
+<Expr name="a35" expression="(tsmax(adj_high, 50) + tsmin(adj_low, 50)) - adj_close - adj_close_113000"/>
+<Expr name="d1.xchen.005" expression="${PROC} tscorr(adc2, a25, 5) + tscorr(adc2, a30, 5) + tscorr(adc2, a35, 5) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<!--  <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>  -->
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpDecay" days="5"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpPow" exp="1"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.006.0912" uId="Ashare" delay="0" exprId="D1.xchen.006">
+<AlphaInfo author="xchen" category="Reversion_momentum" batch_name="D1.xchen.006"/>
+<Config>
+<Expr name="D1.xchen.006" expression="${PROC} -abs(data(dr.or, 0)) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="" rankMode="1"/>
+<!--  <Op mId="OpPow" exp="1" />  -->
+<!--  <Op mId="OpDecay" days="5" />  -->
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<!--  <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+            <Op mId="OpPow" exp="1" />
+            <Op mId="OpIndNeut" group="GROUPHSZZ2" />  -->
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  idea: 分开计算(开盘前vol,开盘价格) (093000-093500vol,093500价格) 两组量价乘积
+量价乘积前先除以过去多日的平均，量价乘积后做zscore再加起来
+
+和corr本质类似，但是经测试表现比直接用tscorr好,现在1dIC 0.0380,用tscorr1dIC 0.0198，所以提交  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.xxiao.006.0918" uId="Ashare" delay="0" exprId="d1.xxiao.006">
+<AlphaInfo author="xxiao" category="Correlation"/>
+<Config>
+<Expr name="v1" expression="data(curr_volume_matrix,0)/data(cumsplit,0)"/>
+<Expr name="vm1" expression="(tsmean(v1,20)+tsmean(v1,15)+tsmean(v1,25))/3"/>
+<Expr name="vr1" expression="v1/vm1 - 1"/>
+<Expr name="p1" expression="data(open,0)/data(cumadjfactor,0)"/>
+<Expr name="pm1" expression="(tsmean(p1,5)+tsmean(p1,7)+tsmean(p1,3))/3"/>
+<Expr name="pr1" expression="p1/pm1 - 1 "/>
+<Expr name="mult1" expression="-zscore(vr1*pr1)"/>
+<Expr name="v2" expression="(data(curr_volume_matrix_093500,0)-data(curr_volume_matrix,0))/data(cumsplit,0)"/>
+<Expr name="vm2" expression="(tsmean(v2,20)+tsmean(v2,15)+tsmean(v2,25))/3"/>
+<Expr name="vr2" expression="v2/vm2 - 1"/>
+<Expr name="p2" expression="data(curr_close_matrix_093500,0)/data(cumadjfactor,0)"/>
+<Expr name="pm2" expression="(tsmean(p2,5)+tsmean(p2,7)+tsmean(p2,3))/3"/>
+<Expr name="pr2" expression="p2/pm2 - 1 "/>
+<Expr name="mult2" expression="-zscore(vr2*pr2)"/>
+<Expr name="d1.xxiao.006" expression="${PROC} mult1+mult2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpDecay" days="5"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.007" uId="Ashare" delay="0" exprId="D1.xchen.007">
+<AlphaInfo author="xchen" category="Volatility" batch_name="D1.xchen.007"/>
+<Config>
+<Expr name="D1.xchen.007" expression="${PROC} - tsmax(data(volume,1)*(data(close, 1)*2-data(high, 1)-data(low, 1))/(data(high, 1)+data(low, 1)), 3) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="" rankMode="1"/>
+<!--  <Op mId="OpPow" exp="1" />  -->
+<!--  <Op mId="OpDecay" days="5" />  -->
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<!--  <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+            <Op mId="OpPow" exp="1" />
+            <Op mId="OpIndNeut" group="GROUPHSZZ2" />  -->
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xchen.008" uId="Ashare" delay="0" exprId="D1.xchen.008">
+<AlphaInfo author="xchen" category="Volatility" batch_name="D1.xchen.008"/>
+<Config>
+<Expr name="D1.xchen.008" expression="${PROC} (groupscale(data(dr.hlmc_5, 1), WindIndustry.wind4) - 0.5) + (groupscale(data(dr.hlmc_30, 1), WindIndustry.wind4) - 0.5) + (groupscale(data(dr.hlmc_1, 1), WindIndustry.wind4) - 0.5) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="" rankMode="1"/>
+<!--  <Op mId="OpPow" exp="1" />  -->
+<Op mId="OpDecay" days="2"/>
+<!--  applied 2 ranks and 2 neutral here mainly to help percentile IC -->
+<!--  <Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+            <Op mId="OpPow" exp="1" />
+            <Op mId="OpIndNeut" group="GROUPHSZZ2" />  -->
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+
+<Alpha mId="AlphaHFExprDaily" id="D1.xxiao.001" uId="Ashare" delay="0" exprId="D1.xxiao.001">
+<AlphaInfo author="xxiao" category="Reversion_momentum"/>
+<Config>
+<Expr name="up" expression="pow(max(data(open,0)/data(cumadjfactor,0) - data(close,1)/data(cumadjfactor,1)*1.02, 0),0.25)"/>
+<Expr name="up2" expression="pow(max(-data(open,0)/data(cumadjfactor,0) + data(close,1)/data(cumadjfactor,1)*0.98, 0),0.25)"/>
+<Expr name="f1" expression="${PROC} rank(tssum(up2,10)) ${PROC2}"/>
+<Expr name="f2" expression="${PROC} rank(tssum(up,10)) ${PROC2}"/>
+<Expr name="f3" expression="${PROC} rank(tssum(up2,15)) ${PROC2}"/>
+<Expr name="f4" expression="${PROC} rank(tssum(up,15)) ${PROC2}"/>
+<Expr name="f5" expression="${PROC} rank(tssum(up2,5)) ${PROC2}"/>
+<Expr name="f6" expression="${PROC} rank(tssum(up,6)) ${PROC2}"/>
+<Expr name="sig1" expression="${PROC} - (f1+f2+f3+f4+f5+f6) ${PROC2}"/>
+<Expr name="sum1" expression="tssum(data(close,1)/data(cumadjfactor,1)*data(volume,1)/data(cumsplit,1),40)"/>
+<Expr name="sum2" expression="tssum(data(volume,1)/data(cumsplit,1),40)"/>
+<Expr name="f12" expression="sum1/sum2"/>
+<Expr name="f22" expression="tsmean(data(close,1)/data(cumadjfactor,1),40)"/>
+<Expr name="diff" expression="rank(f22-f12)"/>
+<Expr name="sig2" expression="${PROC} diff ${PROC2}"/>
+<Expr name="D1.xxiao.001" expression="${PROC} sig1+sig2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha01_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="market" factors="returns20:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha01_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xxiao.003" uId="Ashare" delay="0" exprId="D1.xxiao.003">
+<AlphaInfo author="xxiao" category="Correlation"/>
+<Config>
+<Expr name="vp1" expression="tscorr(data(returns,1),data(open,0)/data(cumadjfactor,0),30)"/>
+<Expr name="vp2" expression="tscorr(data(returns,1),data(open,0)/data(cumadjfactor,0),40)"/>
+<Expr name="vp3" expression="tscorr(data(returns,1),data(open,0)/data(cumadjfactor,0),50)"/>
+<Expr name="f1" expression=" -zscore(vp1)-zscore(vp2)-zscore(vp3)"/>
+<Expr name="f2" expression=" pow(f1,0.9)+pow(f1,1)"/>
+<Expr name="D1.xxiao.003" expression="${PROC} f2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha03_v1_${SNAPTIME}"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha03_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xxiao.004" uId="Ashare" delay="0" exprId="D1.xxiao.004">
+<AlphaInfo author="xxiao" category="Comovement_group"/>
+<Config>
+<Expr name="up" expression="data(returns,1)- groupmean(data(returns,1),WindIndustry.wind3) + groupmean(data(returns,1),WindIndustry.wind1)"/>
+<Expr name="f1" expression="${PROC} -decay(up,5) ${PROC2}"/>
+<Expr name="f2" expression="${PROC} -tsmean(up,15) ${PROC2}"/>
+<Expr name="D1.xxiao.004" expression="${PROC}pow(f1+f2,0.9) + pow(f1+f2,1) ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha04_v1_${SNAPTIME}"/>
+<Op mId="OpNeutralize" groups="sector" factors="returns120:1 returns50:1 returns5:1 returns:1" rankMode="1"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpDecay" days="2"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha04_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xxiao.006" uId="Ashare" delay="0" exprId="D1.xxiao.006">
+<AlphaInfo author="xxiao" category="Correlation"/>
+<Config>
+<Expr name="v" expression="data(curr_volume_matrix,0)/data(cumsplit,0)"/>
+<Expr name="vr" expression="v/tsmean(v,10) - 1"/>
+<Expr name="p" expression="data(open,0)/data(cumadjfactor,0)"/>
+<Expr name="pr" expression="p/tsdelay(p,1) - 1 "/>
+<Expr name="f1" expression="decay((-vr*pr),5)"/>
+<Expr name="f2" expression="truncate(scaletobook(f1,1),0.004)"/>
+<Expr name="sig1" expression="${PROC} f2 ${PROC2}"/>
+<Expr name="vp" expression="data(vwap,1)/data(cumadjfactor,1)"/>
+<Expr name="vpr" expression="vp/tsmean(vp,5) - 1"/>
+<Expr name="tp" expression="(data(curr_volume_matrix_100000,1) - data(curr_volume_matrix_103000,1) + data(curr_volume_matrix_110000,1) - data(curr_volume_matrix_113000,1) + data(curr_volume_matrix_133000,1) - data(curr_volume_matrix_140000,1) + data(curr_volume_matrix_143000,1) - data(close,1))/data(cumadjfactor,1)"/>
+<Expr name="tpr" expression="tp/tsmean(tp,60) - 1"/>
+<Expr name="f12" expression="-vpr*tpr"/>
+<Expr name="f22" expression="pow(zscore(zscore(f12) - 0.1*zscore(rank(f12))),0.2)"/>
+<Expr name="f32" expression="truncate(scaletobook(f22,1),0.009)"/>
+<Expr name="sig2" expression="${PROC} f32${PROC2}"/>
+<Expr name="D1.xxiao.006" expression="${PROC} sig1 - 0.2*sig2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha06_v1_${SNAPTIME}"/>
+<Op mId="OpDecay" days="4"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha06_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  idea: 分开计算(开盘前vol,开盘价格) (093000-093500vol,093500价格) 两组量价乘积
+量价乘积前先除以过去多日的平均，量价乘积后做zscore再加起来
+
+和corr本质类似，但是经测试表现比直接用tscorr好,现在1dIC 0.0380,用tscorr1dIC 0.0198，所以提交  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.xxiao.006" uId="Ashare" delay="0" exprId="d1.xxiao.006">
+<AlphaInfo author="xxiao" category="Correlation"/>
+<Config>
+<Expr name="v1" expression="data(curr_volume_matrix,0)/data(cumsplit,0)"/>
+<Expr name="vm1" expression="(tsmean(v1,20)+tsmean(v1,15)+tsmean(v1,25))/3"/>
+<Expr name="vr1" expression="v1/vm1 - 1"/>
+<Expr name="p1" expression="data(open,0)/data(cumadjfactor,0)"/>
+<Expr name="pm1" expression="(tsmean(p1,5)+tsmean(p1,7)+tsmean(p1,3))/3"/>
+<Expr name="pr1" expression="p1/pm1 - 1 "/>
+<Expr name="mult1" expression="-zscore(vr1*pr1)"/>
+<Expr name="v2" expression="(data(curr_volume_matrix_093500,0)-data(curr_volume_matrix,0))/data(cumsplit,0)"/>
+<Expr name="vm2" expression="(tsmean(v2,20)+tsmean(v2,15)+tsmean(v2,25))/3"/>
+<Expr name="vr2" expression="v2/vm2 - 1"/>
+<Expr name="p2" expression="data(curr_close_matrix_093500,0)/data(cumadjfactor,0)"/>
+<Expr name="pm2" expression="(tsmean(p2,5)+tsmean(p2,7)+tsmean(p2,3))/3"/>
+<Expr name="pr2" expression="p2/pm2 - 1 "/>
+<Expr name="mult2" expression="-zscore(vr2*pr2)"/>
+<Expr name="d1.xxiao.006" expression="${PROC} mult1+mult2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpDecay" days="5"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpTruncate" maxPercent="0.009"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  idea: 分开计算(开盘前vol,开盘价格) (093000至093500vol,093500价格) 两组量价乘积
+量价乘积前相对过去多日的平均计算变化率，量价乘积后zscore再相加，第一组因为可以用到d0数据预测性更强所以权重更大
+和corr本质类似，但是比直接用tscorr预测力强
+【修正上一版d1.xxiao.006用了d0 093500 BaseMatrix数据的问题，v2这一版delay1了】  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.xxiao.006.v2" uId="Ashare" delay="0" exprId="d1.xxiao.006.v2">
+<AlphaInfo author="xxiao" category="Correlation"/>
+<Config>
+<Expr name="v1" expression="data(curr_volume_matrix,0)/data(cumsplit,0)"/>
+<Expr name="vm1" expression="(tsmean(v1,20)+tsmean(v1,15)+tsmean(v1,25))/3"/>
+<Expr name="vr1" expression="v1/vm1 - 1"/>
+<Expr name="p1" expression="data(open,0)/data(cumadjfactor,0)"/>
+<Expr name="pm1" expression="(tsmean(p1,5)+tsmean(p1,7)+tsmean(p1,3))/3"/>
+<Expr name="pr1" expression="p1/pm1 - 1 "/>
+<Expr name="mult1" expression="-zscore(vr1*pr1)"/>
+<Expr name="v2" expression="(data(curr_volume_matrix_093500,1)-data(curr_volume_matrix,1))/data(cumsplit,1)"/>
+<Expr name="vm2" expression="(tsmean(v2,20)+tsmean(v2,15)+tsmean(v2,25))/3"/>
+<Expr name="vr2" expression="v2/vm2 - 1"/>
+<Expr name="p2" expression="data(curr_close_matrix_093500,1)/data(cumadjfactor,1)"/>
+<Expr name="pm2" expression="(tsmean(p2,5)+tsmean(p2,7)+tsmean(p2,3))/3"/>
+<Expr name="pr2" expression="p2/pm2 - 1 "/>
+<Expr name="mult2" expression="-zscore(vr2*pr2)"/>
+<Expr name="d1.xxiao.006.v2" expression="${PROC} mult1 + 0.25 * mult2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpDecay" days="5"/>
+<Op mId="OpTruncate" maxPercent="0.0095"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpTruncate" maxPercent="0.0095"/>
+<Op mId="OpTruncate" maxPercent="0.0095"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
+<Alpha mId="AlphaHFExprDaily" id="D1.xxiao.007" uId="Ashare" delay="0" exprId="D1.xxiao.007">
+<AlphaInfo author="xxiao" category="Reversion_momentum"/>
+<Config>
+<Expr name="p1430" expression="data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+<Expr name="p1030" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)"/>
+<Expr name="noonret" expression="(p1430-p1030)/p1030"/>
+<Expr name="f1" expression="-decay(noonret,15)-decay(noonret,20)"/>
+<Expr name="f2" expression="truncate(scaletobook(f1,1),0.003)"/>
+<Expr name="D1.xxiao.007" expression="${PROC}f2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha07_v1_${SNAPTIME}"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha07_v2_${SNAPTIME}"/>
+</Alpha>
+<!--  idea: 躲开开盘收盘部分，计算日内中间部分的RET
+
+1. truncate已修改；decay经测试【先decay再zscore】优于【先zscore在decay】,尝试将decay换成tsmean效果仍不如decay，暂时保留decay在表达式里
+2. 已做参数平滑，经尝试给103000/143000加大权重后表现更好；
+   尝试去掉111500/113000 ~ 131500的中午break,各指标不如原本，1dIC从0.0307降至0.0231，暂时选择不拆开；
+   尝试只看中午break，无显著IC
+3. 尝试除以volatility:
+   尝试自己的;returns的;(close/open-1)的;(high-low)/(high+low)的 5;10;20;40;60日tsstd.各指标不如原本，中性化后最好的1dIC 0.0249，暂时不做中性化  -->
+<Alpha mId="AlphaHFExprDaily" id="d1.xxiao.007.0918" uId="Ashare" delay="0" exprId="d1.xxiao.007">
+<AlphaInfo author="xxiao" category="Reversion_momentum"/>
+<Config>
+<Expr name="p1015" expression="data(curr_close_matrix_101500,1)/data(cumadjfactor,1)"/>
+<Expr name="p1030" expression="data(curr_close_matrix_103000,1)/data(cumadjfactor,1)"/>
+<Expr name="p1045" expression="data(curr_close_matrix_104500,1)/data(cumadjfactor,1)"/>
+<Expr name="p1415" expression="data(curr_close_matrix_141500,1)/data(cumadjfactor,1)"/>
+<Expr name="p1430" expression="data(curr_close_matrix_143000,1)/data(cumadjfactor,1)"/>
+<Expr name="p1445" expression="data(curr_close_matrix_144500,1)/data(cumadjfactor,1)"/>
+<Expr name="p1" expression="(p1015+4*p1030+p1045)/6"/>
+<Expr name="p4" expression="(p1415+4*p1430+p1445)/6"/>
+<Expr name="ret" expression="(p4-p1)/p1"/>
+<Expr name="f1" expression="ret"/>
+<Expr name="f2" expression="-decay(f1,15)-decay(f1,20)"/>
+<Expr name="d1.xxiao.007" expression="${PROC} f2 ${PROC2}"/>
+</Config>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v1_${SNAPTIME}"/>
+<Op mId="OpTruncate" group="0.009"/>
+<Op mId="OpIndNeut" group="GROUPHSZZ2"/>
+<Op mId="OpTruncate" group="0.009"/>
+<Op mId="OpTruncate" group="0.009"/>
+<Op mId="OpDumpNio" niopath="${PRODUCTIONPATH}/alpha" delay="0" dateoffset="1024" nioname="Alpha_v2_${SNAPTIME}"/>
+</Alpha>
